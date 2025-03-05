@@ -29,16 +29,22 @@ type APIResponse struct {
 	Duration   time.Duration
 }
 
-// MakeAPIRequest sends an API request and returns the response.  It now takes APIRequestParams.
+// MakeAPIRequest sends an API request and returns the response.
 func MakeAPIRequest(params APIRequestParams) *APIResponse {
 	start := time.Now()
 	client := &http.Client{
 		Timeout: params.Timeout,
 	}
 
-	body := bytes.NewBuffer([]byte(params.Body))
+	var bodyReader io.Reader
+	if params.Body != "" { // Only create a body reader if there's a body
+		bodyReader = bytes.NewBuffer([]byte(params.Body))
+	} else {
+		bodyReader = nil //Important to send nil instead of empty reader for GET/DELETE without body
+	}
 
-	req, err := http.NewRequest(params.Method, params.URL, body)
+	req, err := http.NewRequest(params.Method, params.URL, bodyReader)
+
 	if err != nil {
 		return &APIResponse{Error: fmt.Errorf("error creating request: %w", err)}
 	}
@@ -99,12 +105,12 @@ func DisplayResponse(resp *APIResponse) {
 	fmt.Println("Status Code:", resp.StatusCode)
 	fmt.Println("Response Time:", resp.Duration)
 	fmt.Println("Headers:")
-	for key, values := range resp.Headers { // Iterate over the slice of values
+	for key, values := range resp.Headers {
 		fmt.Printf("  %s: %s\n", key, strings.Join(values, ", "))
 	}
 
 	fmt.Println("Body:")
-	if strings.Contains(strings.Join(resp.Headers["Content-Type"],","), "application/json") {
+	if strings.Contains(strings.Join(resp.Headers["Content-Type"], ","), "application/json") {
 		formattedJSON, err := FormatJSON(resp.Body)
 		if err == nil {
 			fmt.Println(formattedJSON)

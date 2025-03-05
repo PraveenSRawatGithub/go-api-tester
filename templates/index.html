@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>API Tester - Dynamic Headers & Enhanced Response</title>
+    <style>
+        /* (Keep all CSS styles from the previous complete version) */
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 960px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #777;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .response {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            overflow-x: auto;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        h3 {
+            color: #34495e;
+            margin-top: 15px;
+            margin-bottom: 5px;
+        }
+
+        p {
+            margin-bottom: 8px;
+        }
+
+        pre {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+
+        .error {
+            color: #e74c3c;
+            background-color: #fdeeee;
+            border: 1px solid #e74c3c;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        li:last-child {
+            border-bottom: none;
+        }
+
+        b {
+            color: #1e8bc3;
+            font-weight: bold;
+        }
+
+        /* Header Styles */
+        .header-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .header-row input {
+            flex: 1;
+            /* Distribute space evenly */
+            min-width: 0;
+            /* Allow items to shrink below their minimum content size */
+
+        }
+
+        .remove-header {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .remove-header:hover {
+            background-color: #c0392b;
+
+        }
+
+        /* Syntax Highlighting (Basic) */
+        .json-key {
+            color: #c7254e;
+        }
+
+        .json-value {
+            color: #377eb8;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .container {
+                width: 95%;
+                padding: 10px;
+            }
+
+            input[type="text"],
+            textarea,
+            select {
+                font-size: 13px;
+            }
+
+            button {
+                font-size: 14px;
+                padding: 10px 16px;
+            }
+
+            .response {
+                padding: 10px;
+            }
+
+            pre {
+                font-size: 12px;
+            }
+
+            .header-row {
+                flex-direction: column;
+                /* Stack on smaller screens */
+
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>API Tester</h1>
+        <form method="POST">
+            <label for="method">Method:</label>
+            <select id="method" name="method">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+            </select>
+
+            <label for="url">URL:</label>
+            <input type="text" id="url" name="url" required placeholder="Enter API Endpoint URL">
+
+            <label>Headers:</label>
+            <div id="headers-container">
+                <div class="header-row">
+                    <input type="text" name="header_key[]" placeholder="Header Key">
+                    <input type="text" name="header_value[]" placeholder="Header Value">
+                    <button type="button" class="remove-header">Remove</button>
+                </div>
+            </div>
+            <button type="button" id="add-header">Add Header</button>
+
+
+            <label for="body">Body:</label>
+            <textarea id="body" name="body" rows="5" placeholder="Enter request body (JSON, XML, etc.)"></textarea>
+
+            <button type="submit">Send Request</button>
+        </form>
+
+        {{if .Error}}
+        <div class="response error">
+            <b>Error:</b> {{.Error}}
+        </div>
+        {{else}}
+        {{if or .StatusCode .Body}}
+        <div class="response">
+            <h2>Response</h2>
+            <p><b>Status Code:</b> {{.StatusCode}}</p>
+            <p><b>Response Time:</b> {{.Duration}}</p>
+            {{if .Headers}}
+            <h3>Headers:</h3>
+            <ul>
+                {{range $key, $values := .Headers}}
+                <li><b>{{$key}}:</b> {{range $values}}{{.}} {{end}}</li>
+                {{end}}
+            </ul>
+            {{end}}
+            {{if .Body}}
+            <h3>Body:</h3>
+            <pre id="responseBody">{{.Body}}</pre>
+            {{end}}
+        </div>
+        {{end}}
+        {{end}}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const addHeaderButton = document.getElementById('add-header');
+            const headersContainer = document.getElementById('headers-container');
+
+            addHeaderButton.addEventListener('click', function () {
+                const headerRow = document.createElement('div');
+                headerRow.classList.add('header-row');
+
+                const keyInput = document.createElement('input');
+                keyInput.type = 'text';
+                keyInput.name = 'header_key[]';
+                keyInput.placeholder = 'Header Key';
+
+                const valueInput = document.createElement('input');
+                valueInput.type = 'text';
+                valueInput.name = 'header_value[]';
+                valueInput.placeholder = 'Header Value';
+
+                const removeButton = document.createElement('button');
+                removeButton.type = 'button';
+                removeButton.classList.add('remove-header');
+                removeButton.textContent = 'Remove';
+
+                removeButton.addEventListener('click', function () {
+                    headerRow.remove();
+                });
+
+                headerRow.appendChild(keyInput);
+                headerRow.appendChild(valueInput);
+                headerRow.appendChild(removeButton);
+
+                headersContainer.appendChild(headerRow);
+            });
+
+            // Syntax highlighting for response body (from previous example)
+            const responseBody = document.getElementById('responseBody');
+            if (responseBody) {
+                try {
+                    const json = JSON.parse(responseBody.textContent);
+                    responseBody.innerHTML = syntaxHighlight(JSON.stringify(json, null, 2)); // Pretty print
+                } catch (e) {
+                    // Attempt to handle XML (placeholder)
+                    if (responseBody.textContent.startsWith("<")) {
+                        responseBody.textContent = "XML Content (basic display): " + responseBody.textContent; //Basic display as example
+                    }
+                    // If not JSON and not XML, leave as is
+                }
+            }
+
+            function syntaxHighlight(json) {
+                json = json.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+                return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                    let cls = 'json-number';
+                    if (/^"/.test(match)) {
+                        if (/:$/.test(match)) {
+                            cls = 'json-key';
+                        } else {
+                            cls = 'json-value';
+                        }
+                    } else if (/true|false/.test(match)) {
+                        cls = 'json-boolean';
+                    } else if (/null/.test(match)) {
+                        cls = 'json-null';
+                    }
+                    return '<span class="' + cls + '">' + match + '</span>';
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
