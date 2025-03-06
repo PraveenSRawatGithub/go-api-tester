@@ -1,0 +1,243 @@
+/* static/style.css */
+
+body {
+    font-family: 'Arial', sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    background-color: #121212;
+    /* Dark background */
+    color: #e0e0e0;
+    /* Light text */
+}
+
+.container {
+    width: 90%;
+    max-width: 960px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #1e1e1e;
+    /* Darker container background */
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    /* Darker shadow */
+}
+
+h1 {
+    color: #bb86fc;
+    /* Purple-ish header */
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+form {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    color: #9fa8da;
+    /* Light blue-ish label */
+}
+
+input[type="text"],
+textarea,
+select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #424242;
+    /* Darker border */
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 14px;
+    background-color: #303030;
+    /* Dark input background */
+    color: #e0e0e0;
+    /* Light input text */
+}
+
+input[type="text"]:focus,
+textarea:focus,
+select:focus {
+    border-color: #bb86fc;
+    /* Purple-ish focus border */
+    outline: none;
+}
+
+select {
+    cursor: pointer;
+}
+
+button {
+    background-color: #bb86fc;
+    /* Purple-ish button */
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #9c6ade;
+    /* Darker purple-ish button hover */
+}
+
+.response {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #424242;
+    /* Darker border */
+    border-radius: 4px;
+    background-color: #303030;
+    /* Darker response background */
+    overflow-x: auto;
+}
+
+h2 {
+    color: #bb86fc;
+    /* Purple-ish response header */
+    margin-bottom: 10px;
+}
+
+h3 {
+    color: #9fa8da;
+    /* Light blue-ish header */
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
+p {
+    margin-bottom: 8px;
+}
+
+pre {
+    background-color: #424242;
+    /* Dark pre background */
+    padding: 10px;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 14px;
+    overflow-x: auto;
+    color: #e0e0e0;
+    /* Light pre text */
+}
+
+.error {
+    color: #ff5252;
+    /* Red error text */
+    background-color: #303030;
+    border: 1px solid #ff5252;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+li {
+    padding: 8px 0;
+    border-bottom: 1px solid #424242;
+    /* Darker border */
+}
+
+li:last-child {
+    border-bottom: none;
+}
+
+b {
+    color: #64b5f6;
+    /* Light blue bold text */
+    font-weight: bold;
+}
+
+/* Header Styles */
+.header-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.header-row input {
+    flex: 1;
+    /* Distribute space evenly */
+    min-width: 0;
+    /* Allow items to shrink below their minimum content size */
+}
+
+.remove-header {
+    background-color: #ff5252;
+    /* Red remove button */
+    color: white;
+    border: none;
+    padding: 8px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.remove-header:hover {
+    background-color: #f44336;
+    /* Darker red remove button hover */
+}
+
+/* Syntax Highlighting (Basic) */
+.json-key {
+    color: #fdd835;
+    /* Yellow-ish key */
+}
+
+.json-value {
+    color: #81d4fa;
+    /* Light blue-ish value */
+}
+
+.json-number {
+    color: #ce93d8;
+}
+
+.json-boolean {
+    color: #a5d6a7;
+}
+
+.json-null {
+    color: #bdbdbd;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .container {
+        width: 95%;
+        padding: 10px;
+    }
+
+    input[type="text"],
+    textarea,
+    select {
+        font-size: 13px;
+    }
+
+    button {
+        font-size: 14px;
+        padding: 10px 16px;
+    }
+
+    .response {
+        padding: 10px;
+    }
+
+    pre {
+        font-size: 12px;
+    }
+
+    .header-row {
+        flex-direction: column;
+        /* Stack on smaller screens */
+    }
+}

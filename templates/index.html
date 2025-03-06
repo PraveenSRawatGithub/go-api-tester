@@ -4,7 +4,7 @@
 <head>
     <title>API Tester - Dynamic Headers & Enhanced Response</title>
     <style>
-        /* (Keep all CSS styles from the previous complete version) */
+        /* Original CSS styles (except for the .dark-theme-response class) */
         body {
             font-family: 'Arial', sans-serif;
             line-height: 1.6;
@@ -101,16 +101,6 @@
             margin-bottom: 8px;
         }
 
-        pre {
-            background-color: #f0f0f0;
-            padding: 10px;
-            border-radius: 4px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-size: 14px;
-            overflow-x: auto;
-        }
-
         .error {
             color: #e74c3c;
             background-color: #fdeeee;
@@ -199,15 +189,48 @@
                 padding: 10px;
             }
 
-            pre {
-                font-size: 12px;
-            }
 
             .header-row {
                 flex-direction: column;
                 /* Stack on smaller screens */
 
             }
+        }
+
+        /* Dark Theme for Response Body ONLY */
+        .dark-theme-response pre {
+            background-color: #2d2d2d;
+            color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+
+        .dark-theme-response .json-key {
+            color: #9cdcfe;
+        }
+
+        .dark-theme-response .json-value {
+            color: #ce9178;
+        }
+
+        .dark-theme-response .json-string {
+            color: #6a8759;
+        }
+
+        .dark-theme-response .json-number {
+            color: #b5cea8;
+        }
+
+        .dark-theme-response .json-boolean {
+            color: #569cd6;
+        }
+
+        .dark-theme-response .json-null {
+            color: #c6c6c6;
         }
     </style>
 </head>
@@ -264,7 +287,9 @@
             {{end}}
             {{if .Body}}
             <h3>Body:</h3>
-            <pre id="responseBody">{{.Body}}</pre>
+            <div class="dark-theme-response">
+                <pre id="responseBody">{{.Body}}</pre>
+            </div>
             {{end}}
         </div>
         {{end}}
@@ -306,7 +331,7 @@
                 headersContainer.appendChild(headerRow);
             });
 
-            // Syntax highlighting for response body (from previous example)
+            // Syntax highlighting for response body
             const responseBody = document.getElementById('responseBody');
             if (responseBody) {
                 try {
@@ -329,7 +354,7 @@
                         if (/:$/.test(match)) {
                             cls = 'json-key';
                         } else {
-                            cls = 'json-value';
+                            cls = 'json-string';
                         }
                     } else if (/true|false/.test(match)) {
                         cls = 'json-boolean';
