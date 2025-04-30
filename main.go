@@ -1,113 +1,13 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"html/template"
-	"io"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 )
-
-// APIResponse holds the response data from an API request.
-type APIResponse struct {
-	StatusCode int
-	Headers    map[string][]string // Use map[string][]string for headers
-	Body       string
-	Error      error
-	Duration   time.Duration
-}
-
-// MakeAPIRequest sends an API request and returns the response.
-func MakeAPIRequest(method, apiURL string, headers map[string]string, body string) *APIResponse {
-	start := time.Now()
-	client := &http.Client{
-		Timeout: 10 * time.Second,
-	}
-
-	var bodyReader io.Reader
-	if body != "" {
-		bodyReader = bytes.NewBuffer([]byte(body))
-	}
-
-	req, err := http.NewRequest(method, apiURL, bodyReader)
-	if err != nil {
-		return &APIResponse{Error: fmt.Errorf("error creating request: %w", err)}
-	}
-
-	for key, value := range headers {
-		req.Header.Set(key, value)
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return &APIResponse{Error: fmt.Errorf("error sending request: %w", err)}
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return &APIResponse{Error: fmt.Errorf("error reading response: %w", err)}
-	}
-
-	elapsed := time.Since(start)
-
-	return &APIResponse{
-		StatusCode: resp.StatusCode,
-		Headers:    resp.Header,
-		Body:       string(respBody),
-		Error:      nil,
-		Duration:   elapsed,
-	}
-}
-
-// FormatJSON formats a JSON string for readability.
-func FormatJSON(jsonString string) (string, error) {
-	var jsonData interface{}
-	err := json.Unmarshal([]byte(jsonString), &jsonData)
-	if err != nil {
-		return "", fmt.Errorf("invalid JSON: %w", err)
-	}
-
-	prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
-	if err != nil {
-		return "", fmt.Errorf("error formatting JSON: %w", err)
-	}
-
-	return string(prettyJSON), nil
-}
-
-// parseHeaders parses the header string from the form into a map (OLD)
-// Keeping it here for reference, but it's no longer used.
-func parseHeaders(headerString string) (map[string]string, error) {
-	headers := make(map[string]string)
-	if headerString == "" {
-		return headers, nil // Return an empty map if headerString is empty
-	}
-
-	headerPairs := strings.Split(headerString, "\n") // Split by newline character
-
-	for _, pair := range headerPairs {
-		pair = strings.TrimSpace(pair) // Trim leading/trailing spaces
-		if pair == "" {
-			continue // Skip empty lines
-		}
-
-		parts := strings.SplitN(pair, ":", 2)
-		if len(parts) != 2 {
-			return nil, fmt.Errorf("invalid header format: %s", pair)
-		}
-
-		key := strings.TrimSpace(parts[0])
-		value := strings.TrimSpace(parts[1])
-		headers[key] = value
-	}
-
-	return headers, nil
-}
 
 func main() {
 	tmpl := template.Must(template.ParseFiles("templates/index.html"))
@@ -119,36 +19,40 @@ func main() {
 		}
 
 		if r.Method == http.MethodPost {
-			// 1. Parse the form
-			err := r.ParseForm()  // MUST call ParseForm before accessing form values with arrays
+			err := r.ParseForm()
 			if err != nil {
 				http.Error(w, "Error parsing form", http.StatusBadRequest)
 				return
 			}
 
-			// 2. Get form values
 			method := r.FormValue("method")
 			apiURL := r.FormValue("url")
 			body := r.FormValue("body")
 
-			// 3. Extract Headers from the form
+			// Extract Headers from form
 			headerKeys := r.Form["header_key[]"]
 			headerValues := r.Form["header_value[]"]
-
-			// 4. Create Header Map
 			headers := make(map[string]string)
 			for i := 0; i < len(headerKeys); i++ {
 				key := strings.TrimSpace(headerKeys[i])
 				value := strings.TrimSpace(headerValues[i])
-				if key != "" && value != "" { // Important: Check for empty keys/values
+				if key != "" && value != "" {
 					headers[key] = value
 				}
 			}
 
-			// Make API Request
-			resp := MakeAPIRequest(method, apiURL, headers, body)
+			// Use the updated MakeAPIRequest from api.go
+			params := APIRequestParams{
+				Method:      method,
+				URL:         apiURL,
+				Headers:     headers,
+				Body:        body,
+				ContentType: headers["Content-Type"],
+				Timeout:     10 * time.Second,
+			}
 
-			// Prepare data for template
+			resp := MakeAPIRequest(params)
+
 			data := struct {
 				Method     string
 				URL        string
@@ -170,7 +74,6 @@ func main() {
 				data.Error = resp.Error.Error()
 			}
 
-			// Execute template with API response
 			tmpl.Execute(w, data)
 		}
 	})
