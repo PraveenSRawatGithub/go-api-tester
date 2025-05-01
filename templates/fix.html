@@ -307,66 +307,6 @@
             margin-bottom: 16px;
             margin-left: 12px;
         }
-
-        .saved-request {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 10px;
-            padding: 12px 16px;
-            margin-bottom: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            transition: box-shadow 0.2s ease;
-        }
-
-        .saved-request:hover {
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .saved-request-method {
-            font-weight: bold;
-            color: #007bff;
-        }
-
-        .saved-request-url {
-            font-family: monospace;
-            color: #333;
-            word-break: break-word;
-        }
-
-        .saved-request-actions {
-            margin-top: 8px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .saved-request-actions button {
-            padding: 6px 10px;
-            font-size: 14px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-        }
-
-        .load-btn {
-            background-color: #28a745;
-            color: white;
-        }
-
-        .delete-btn {
-            background-color: #dc3545;
-            color: white;
-        }
-
-        .load-btn:hover {
-            background-color: #218838;
-        }
-
-        .delete-btn:hover {
-            background-color: #c82333;
-        }
     </style>
 
 </head>
@@ -396,25 +336,23 @@
             </div>
             <button type="button" id="add-header">Add Header</button>
 
+
             <label for="body">Body:</label>
             <textarea id="body" name="body" rows="5" placeholder="Enter request body (JSON, XML, etc.)"></textarea>
 
             <button type="submit" id="send-button">Send Request</button>
         </form>
 
-        <!-- SAVED REQUESTS SECTION (only rendered once via JS) -->
-        <h2>Saved Requests</h2>
-        <div id="history-list"></div>
-
-        <!-- RESPONSE SECTION -->
         {{if .Error}}
         <div class="response error">
             <b>Error:</b> {{.Error}}
         </div>
-        {{else if or .StatusCode .Body}}
+        {{else}}
+        {{if or .StatusCode .Body}}
         <div class="response">
             <h2>Response</h2>
 
+            <!-- STATUS CODE BOX -->
             <div
                 class="status-box {{if ge .StatusCode 200}}{{if lt .StatusCode 300}}status-success{{else if lt .StatusCode 400}}status-info{{else if lt .StatusCode 500}}status-warning{{else}}status-error{{end}}{{end}}">
                 <strong>Status Code:</strong> {{.StatusCode}}
@@ -424,6 +362,8 @@
                 <strong>Response Time:</strong> {{.Duration}}
             </div>
 
+
+            <!-- HEADERS BOX -->
             {{if .Headers}}
             <div class="headers-box">
                 <h3>Headers</h3>
@@ -435,6 +375,7 @@
             </div>
             {{end}}
 
+            <!-- BODY -->
             {{if .Body}}
             <h3>Body:</h3>
             <div class="dark-theme-response">
@@ -443,9 +384,9 @@
             {{end}}
         </div>
         {{end}}
+        {{end}}
     </div>
 
-    <!-- JS: Load saved requests from localStorage -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const addHeaderButton = document.getElementById('add-header');
@@ -477,191 +418,45 @@
                 headerRow.appendChild(keyInput);
                 headerRow.appendChild(valueInput);
                 headerRow.appendChild(removeButton);
+
                 headersContainer.appendChild(headerRow);
             });
 
-            // Render saved request history
-            const historyList = document.getElementById('history-list');
-            const savedRequests = JSON.parse(localStorage.getItem('apiHistory')) || [];
-
-            historyList.innerHTML = ''; // Avoid duplicates
-
-            savedRequests.forEach((req, index) => {
-                const item = document.createElement('div');
-                item.className = 'saved-request';
-
-                item.innerHTML = `
-                    <div class="saved-request-method">${req.method}</div>
-                    <div class="saved-request-url">${req.url}</div>
-                    <div class="saved-request-actions">
-                        <button class="load-btn" onclick="loadRequest(${index})">Load</button>
-                        <button class="delete-btn" onclick="deleteRequest(${index})">Delete</button>
-                    </div>
-                `;
-
-                historyList.appendChild(item);
-            });
-
-            // Syntax highlight
+            // Syntax highlighting for response body
             const responseBody = document.getElementById('responseBody');
             if (responseBody) {
                 try {
                     const json = JSON.parse(responseBody.textContent);
-                    responseBody.innerHTML = syntaxHighlight(JSON.stringify(json, null, 2));
-                } catch {
+                    responseBody.innerHTML = syntaxHighlight(JSON.stringify(json, null, 2)); // Pretty print
+                } catch (e) {
+                    // Attempt to handle XML (placeholder)
                     if (responseBody.textContent.startsWith("<")) {
-                        responseBody.textContent = "XML Content: " + responseBody.textContent;
+                        responseBody.textContent = "XML Content (basic display): " + responseBody.textContent; //Basic display as example
                     }
+                    // If not JSON and not XML, leave as is
                 }
             }
 
             function syntaxHighlight(json) {
-                return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+                json = json.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+                return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
                     let cls = 'json-number';
                     if (/^"/.test(match)) {
-                        cls = /:$/.test(match) ? 'json-key' : 'json-string';
+                        if (/:$/.test(match)) {
+                            cls = 'json-key';
+                        } else {
+                            cls = 'json-string';
+                        }
                     } else if (/true|false/.test(match)) {
                         cls = 'json-boolean';
                     } else if (/null/.test(match)) {
                         cls = 'json-null';
                     }
-                    return `<span class="${cls}">${match}</span>`;
+                    return '<span class="' + cls + '">' + match + '</span>';
                 });
-            }
-
-            window.loadRequest = function (index) {
-                const req = savedRequests[index];
-                document.getElementById('method').value = req.method;
-                document.getElementById('url').value = req.url;
-                document.getElementById('body').value = req.body || '';
-
-                // Clear and re-add headers
-                headersContainer.innerHTML = '';
-                req.headers.forEach(header => {
-                    const headerRow = document.createElement('div');
-                    headerRow.classList.add('header-row');
-
-                    const keyInput = document.createElement('input');
-                    keyInput.type = 'text';
-                    keyInput.name = 'header_key[]';
-                    keyInput.placeholder = 'Header Key';
-                    keyInput.value = header.key;
-
-                    const valueInput = document.createElement('input');
-                    valueInput.type = 'text';
-                    valueInput.name = 'header_value[]';
-                    valueInput.placeholder = 'Header Value';
-                    valueInput.value = header.value;
-
-                    const removeButton = document.createElement('button');
-                    removeButton.type = 'button';
-                    removeButton.classList.add('remove-header');
-                    removeButton.textContent = 'Remove';
-                    removeButton.onclick = () => headerRow.remove();
-
-                    headerRow.appendChild(keyInput);
-                    headerRow.appendChild(valueInput);
-                    headerRow.appendChild(removeButton);
-
-                    headersContainer.appendChild(headerRow);
-                });
-            }
-
-            window.deleteRequest = function (index) {
-                savedRequests.splice(index, 1);
-                localStorage.setItem('apiHistory', JSON.stringify(savedRequests));
-                location.reload(); // Refresh to re-render the list
             }
         });
     </script>
-
-    <script>
-        // Save request to localStorage on form submit
-        document.querySelector('form').addEventListener('submit', function (e) {
-            const method = document.getElementById('method').value;
-            const url = document.getElementById('url').value;
-            const body = document.getElementById('body').value;
-
-            const headerKeys = document.getElementsByName('header_key[]');
-            const headerValues = document.getElementsByName('header_value[]');
-            const headers = [];
-
-            for (let i = 0; i < headerKeys.length; i++) {
-                const key = headerKeys[i].value.trim();
-                const value = headerValues[i].value.trim();
-                if (key !== '') {
-                    headers.push({ key, value });
-                }
-            }
-
-            const newRequest = { method, url, headers, body };
-            let history = JSON.parse(localStorage.getItem('apiHistory')) || [];
-
-            // Avoid duplicate entries
-            history = history.filter(r => r.method !== method || r.url !== url || r.body !== body);
-
-            history.unshift(newRequest); // Add to top
-            if (history.length > 10) history.pop(); // Limit to 10 entries
-
-            localStorage.setItem('apiHistory', JSON.stringify(history));
-        });
-
-        // Load a saved request into the form
-        function loadRequest(index) {
-            const history = JSON.parse(localStorage.getItem('apiHistory')) || [];
-            const req = history[index];
-            if (!req) return;
-
-            document.getElementById('method').value = req.method;
-            document.getElementById('url').value = req.url;
-            document.getElementById('body').value = req.body || '';
-
-            const container = document.getElementById('headers-container');
-            container.innerHTML = '';
-
-            req.headers.forEach(h => {
-                const row = document.createElement('div');
-                row.className = 'header-row';
-
-                const keyInput = document.createElement('input');
-                keyInput.type = 'text';
-                keyInput.name = 'header_key[]';
-                keyInput.placeholder = 'Header Key';
-                keyInput.value = h.key;
-
-                const valueInput = document.createElement('input');
-                valueInput.type = 'text';
-                valueInput.name = 'header_value[]';
-                valueInput.placeholder = 'Header Value';
-                valueInput.value = h.value;
-
-                const removeButton = document.createElement('button');
-                removeButton.type = 'button';
-                removeButton.className = 'remove-header';
-                removeButton.textContent = 'Remove';
-                removeButton.onclick = () => row.remove();
-
-                row.appendChild(keyInput);
-                row.appendChild(valueInput);
-                row.appendChild(removeButton);
-
-                container.appendChild(row);
-            });
-        }
-
-        // Delete a request from localStorage
-        function deleteRequest(index) {
-            let history = JSON.parse(localStorage.getItem('apiHistory')) || [];
-            history.splice(index, 1);
-            localStorage.setItem('apiHistory', JSON.stringify(history));
-            location.reload();
-        }
-
-        // Expose functions globally
-        window.loadRequest = loadRequest;
-        window.deleteRequest = deleteRequest;
-    </script>
-
 </body>
 
 </html>
